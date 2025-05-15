@@ -20,7 +20,7 @@ export default function handler(
 	const searchParam = (query.search as string) || ''
 
 	try {
-		const db = new Database('hashicorp.sqlite', { verbose: console.log })
+		const db = new Database('hashicorp.sqlite')
 		const isDepartmentId = !isNaN(Number(searchParam))
 		let statement = null
 
@@ -47,7 +47,7 @@ export default function handler(
 
 		const results =
 			searchParam === ''
-				? (statement.all() as PersonRecord)
+				? (statement.all() as PersonRecord[])
 				: (statement.all(searchParam) as PersonRecord[])
 
 		db.close()

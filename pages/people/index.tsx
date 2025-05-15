@@ -60,8 +60,6 @@ export default function PeoplePage({
 	const [people, setPeople] = useState<PersonRecord[]>(allPeople)
 	const [loading, setLoading] = useState(false)
 
-	console.log(hideNoPicture)
-
 	useEffect(() => {
 		const fetchPeople = async () => {
 			setLoading(true)
@@ -91,8 +89,6 @@ export default function PeoplePage({
 		}
 	})
 
-	console.log('displayedPeople', displayedPeople)
-	console.log('people', people)
 	return (
 		<main className="g-grid-container">
 			<div>
@@ -119,7 +115,6 @@ export default function PeoplePage({
 				<ul>
 					{displayedPeople.length === 0 && <div>No results found.</div>}
 					{displayedPeople.map((person: PersonRecord) => {
-						console.log('person', person)
 						return (
 							<li key={person.id}>
 								<Profile
