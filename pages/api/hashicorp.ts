@@ -5,6 +5,8 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PersonRecord } from 'types'
+import Database from 'better-sqlite3'
+import 'dotenv/config'
 
 type ResponseData = {
 	results: PersonRecord[]
@@ -15,9 +17,34 @@ export default function handler(
 	res: NextApiResponse<ResponseData>
 ) {
 	const { query } = req
-	const searchParam = query.search || ''
+	const searchParam = (query.search as string) || ''
 
-	// Sr. candidate TODO: Perform DB query and return the result
+	try {
+		const db = new Database('hashicorp.sqlite', { verbose: console.log })
+		const isDepartmentId = !isNaN(Number(searchParam))
+		let statement = null
 
-	res.status(200).json({ results: [] })
+		if (isDepartmentId) {
+			statement = db.prepare(`
+			SELECT *
+			FROM people
+			WHERE department_id = ? 
+		`)
+		} else {
+			statement = db.prepare(`
+			SELECT *
+			FROM people
+			WHERE name LIKE '%' || ? || '%' 
+		`)
+		}
+
+		const results = statement.all(searchParam) as PersonRecord[]
+
+		db.close()
+
+		res.status(200).json({ results })
+	} catch (err) {
+		console.error('Query failed:', err)
+		res.status(500).json({ results: [] })
+	}
 }
