@@ -26,6 +26,7 @@ const query = `query {
      name
      id
    }
+	title
  }
 }`
 
@@ -56,6 +57,7 @@ async function main() {
 				avatar_url TEXT,
 				department_name TEXT,
 				department_id TEXT NULL,
+				title TEXT NOT NULL,
 				FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE SET NULL
 			)
 			`)
@@ -76,8 +78,8 @@ async function main() {
 		})
 
 		const addPerson = db.prepare(`
-			INSERT OR REPLACE INTO people (id, name, avatar_url, department_name, department_id)
-			VALUES ($id, $name, $avatar_url, $department_name, $department_id)
+			INSERT OR REPLACE INTO people (id, name, avatar_url, department_name, department_id, title)
+			VALUES ($id, $name, $avatar_url, $department_name, $department_id, $title)
 		`)
 
 		const addPeople = db.transaction((people) => {
@@ -96,6 +98,7 @@ async function main() {
 					avatar_url: person.avatar?.url || null,
 					department_name: person.department?.name || null,
 					department_id: departmentId,
+					title: person.title,
 				})
 			}
 		})

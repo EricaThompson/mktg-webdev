@@ -111,14 +111,14 @@ export default function PeoplePage({
 				<ul>
 					{people.length === 0 && <div>No results found.</div>}
 					{people.map((person: PersonRecord) => {
-						console.log('person', person['avatar_url'])
+						console.log('person', person)
 						return (
 							<li key={person.id}>
 								<Profile
 									imgUrl={person['avatar_url']}
 									name={person.name}
-									title={person.name}
-									department={person.name}
+									title={person.title}
+									department={person['department_name']}
 								/>
 							</li>
 						)
