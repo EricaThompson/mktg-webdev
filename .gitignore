@@ -4,3 +4,6 @@ node_modules
 out
 .env
 *.sqlite
+hashicorp.sqlite-shm
+hashicorp.sqlite-wal
+plan.md
