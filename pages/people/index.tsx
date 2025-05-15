@@ -1,22 +1,13 @@
-/**
- * Copyright (c) HashiCorp, Inc.
- * SPDX-License-Identifier: MPL-2.0
- */
-
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { executeQuery } from '@datocms/cda-client'
-import { GetStaticPropsResult } from 'next'
+import { GetStaticProps } from 'next'
 import { PersonRecord, DepartmentNode, DepartmentTree, Department } from 'types'
 import BaseLayout from '../../layouts/base'
-
+import query from './query.graphql'
 import {
-	filterPeople,
 	findDepartments,
 	departmentRecordsToDepartmentTree,
-	findChildrenDepartments,
 } from '../../utilities'
-import query from './query.graphql'
-
 import Profile from 'components/profile'
 import Search from 'components/search'
 import DepartmentFilter from 'components/departmentFilter'
@@ -26,26 +17,34 @@ interface Props {
 	departmentTree: DepartmentTree
 }
 
-export async function getStaticProps(): Promise<GetStaticPropsResult<Props>> {
-	// Sr. candidate TODO: Load data from DB
+export const getStaticProps: GetStaticProps = async () => {
+	try {
+		const result = await executeQuery<{
+			allPeople: PersonRecord[]
+			allDepartments: DepartmentNode[]
+		}>(query, {
+			token: `${process.env.DATO_API_TOKEN}`,
+		})
 
-	const result = await executeQuery<{
-		allPeople: PersonRecord[]
-		allDepartments: DepartmentNode[]
-	}>(query, {
-		token: `${process.env.DATO_API_TOKEN}`,
-	})
+		const data = {
+			allPeople: result.allPeople,
+			departmentTree: departmentRecordsToDepartmentTree(result.allDepartments),
+		}
 
-	const data = {
-		allPeople: result.allPeople,
-		allDepartments: result.allDepartments,
-	}
-
-	return {
-		props: {
-			allPeople: data.allPeople,
-			departmentTree: departmentRecordsToDepartmentTree(data.allDepartments),
-		},
+		return {
+			props: {
+				allPeople: data.allPeople,
+				departmentTree: data.departmentTree,
+			},
+		}
+	} catch (error) {
+		console.error('Error loading data:', error)
+		return {
+			props: {
+				allPeople: [],
+				departmentTree: departmentRecordsToDepartmentTree([]),
+			},
+		}
 	}
 }
 
@@ -54,84 +53,78 @@ export default function PeoplePage({
 	departmentTree,
 }: Props): React.ReactElement {
 	const [searchingName, setSearchingName] = useState('')
-	const [hideNoPicture, setHideNoPicture] = useState(false)
-	const [filteredDepartments, setFilteredDepartments] = useState([])
+	// const [hideNoPicture, setHideNoPicture] = useState(false)
+	const [filteredDepartments, setFilteredDepartments] = useState<
+		DepartmentNode[]
+	>([])
+	const [people, setPeople] = useState<PersonRecord[]>(allPeople)
+	const [loading, setLoading] = useState(false)
 
-	const peopleFiltered = filterPeople(
-		allPeople,
-		searchingName,
-		hideNoPicture,
-		findChildrenDepartments(
-			departmentTree,
-			filteredDepartments[filteredDepartments.length - 1]?.id || []
-		)
-	)
+	useEffect(() => {
+		const fetchPeople = async () => {
+			setLoading(true)
+			try {
+				const queryParam =
+					searchingName.trim() !== '' ? `?search=${searchingName.trim()}` : ''
+				const response = await fetch(`/api/hashicorp${queryParam}`)
+				const data = await response.json()
+				setPeople(data.results)
+			} catch (error) {
+				console.error('Error fetching people:', error)
+				setPeople([])
+			} finally {
+				setLoading(false)
+			}
+		}
 
-	const filteredDepartmentIds = filteredDepartments.reduce(
-		(acc: string[], department: DepartmentNode) => [...acc, department.id],
-		[]
-	)
+		const timeoutId = setTimeout(fetchPeople, 300)
+		return () => clearTimeout(timeoutId)
+	}, [searchingName])
 
-	// Sr. candidate TODO: Update URL based on search and department filters
+	// const displayedPeople = people.filter(person => {
+	//     return !hideNoPicture || (person.avatar && person.avatar.url)
+	// })
 
 	return (
 		<main className="g-grid-container">
 			<div>
-				<div>
-					<h1>HashiCorp Humans</h1>
-					<span>Find a HashiCorp human</span>
-				</div>
+				<h1>HashiCorp Humans</h1>
 				<Search
-					onInputChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-						setSearchingName(e.target.value)
-						/**
-						 * Sr. candidate TODO: Hit the API to search for people
-						 * You can use the following URL to hit the API
-						 * /api/hashicorp?search=...
-						 */
-					}}
-					onProfileChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-						setHideNoPicture(e.target.checked)
-					}
+					onInputChange={(e) => setSearchingName(e.target.value)}
+					onProfileChange={(e) => setHideNoPicture(e.target.checked)}
 				/>
 			</div>
-			<div>
-				<aside>
-					<DepartmentFilter
-						filteredDepartmentIds={filteredDepartmentIds}
-						clearFiltersHandler={() => {
-							setFilteredDepartments([])
-						}}
-						selectFilterHandler={(departmentFilter: Department) => {
-							const totalDepartmentFilter = findDepartments(
-								departmentTree,
-								departmentFilter.id
-							)
-							setFilteredDepartments(totalDepartmentFilter)
-						}}
-						departmentTree={departmentTree}
-					/>
-				</aside>
+			<aside>
+				{/* <DepartmentFilter
+                    filteredDepartmentIds={filteredDepartments.map(dept => dept.id)}
+                    clearFiltersHandler={() => setFilteredDepartments([])}
+                    selectFilterHandler={(departmentFilter: Department) => {
+                        // const totalDepartmentFilter = findDepartments(departmentTree, departmentFilter.id)
+                        // setFilteredDepartments(totalDepartmentFilter)
+                    }}
+                    departmentTree={departmentTree}
+                /> */}
+			</aside>
+			{loading ? (
+				<div>Loading...</div>
+			) : (
 				<ul>
-					{peopleFiltered.length === 0 && (
-						<div>
-							<span>No results found.</span>
-						</div>
-					)}
-					{peopleFiltered.map((person: PersonRecord) => {
+					{people.length === 0 && <div>No results found.</div>}
+					{people.map((person: PersonRecord) => {
+						console.log('person', person['avatar_url'])
 						return (
 							<li key={person.id}>
 								<Profile
-									imgUrl={person.avatar?.url}
+									imgUrl={person['avatar_url']}
 									name={person.name}
-									title={person.title}
-									department={person.department.name}
+									title={person.name}
+									department={person.name}
 								/>
 							</li>
 						)
 					})}
 				</ul>
-			</div>
+			)}
 		</main>
 	)
 }
