@@ -53,12 +53,14 @@ export default function PeoplePage({
 	departmentTree,
 }: Props): React.ReactElement {
 	const [searchingName, setSearchingName] = useState('')
-	// const [hideNoPicture, setHideNoPicture] = useState(false)
+	const [hideNoPicture, setHideNoPicture] = useState(false)
 	const [filteredDepartments, setFilteredDepartments] = useState<
 		DepartmentNode[]
 	>([])
 	const [people, setPeople] = useState<PersonRecord[]>(allPeople)
 	const [loading, setLoading] = useState(false)
+
+	console.log(hideNoPicture)
 
 	useEffect(() => {
 		const fetchPeople = async () => {
@@ -81,10 +83,16 @@ export default function PeoplePage({
 		return () => clearTimeout(timeoutId)
 	}, [searchingName])
 
-	// const displayedPeople = people.filter(person => {
-	//     return !hideNoPicture || (person.avatar && person.avatar.url)
-	// })
+	const displayedPeople = people.filter((person) => {
+		if (hideNoPicture && person['avatar_url'] === null) {
+			return
+		} else {
+			return person
+		}
+	})
 
+	console.log('displayedPeople', displayedPeople)
+	console.log('people', people)
 	return (
 		<main className="g-grid-container">
 			<div>
@@ -109,8 +117,8 @@ export default function PeoplePage({
 				<div>Loading...</div>
 			) : (
 				<ul>
-					{people.length === 0 && <div>No results found.</div>}
-					{people.map((person: PersonRecord) => {
+					{displayedPeople.length === 0 && <div>No results found.</div>}
+					{displayedPeople.map((person: PersonRecord) => {
 						console.log('person', person)
 						return (
 							<li key={person.id}>
