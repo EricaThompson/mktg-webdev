@@ -24,21 +24,31 @@ export default function handler(
 		const isDepartmentId = !isNaN(Number(searchParam))
 		let statement = null
 
-		if (isDepartmentId) {
+		if (searchParam === '') {
 			statement = db.prepare(`
 			SELECT *
 			FROM people
-			WHERE department_id = ? 
 		`)
 		} else {
-			statement = db.prepare(`
-			SELECT *
-			FROM people
-			WHERE name LIKE '%' || ? || '%' 
-		`)
+			if (isDepartmentId) {
+				statement = db.prepare(`
+					SELECT *
+					FROM people
+					WHERE department_id = ? 
+				`)
+			} else {
+				statement = db.prepare(`
+					SELECT *
+					FROM people
+					WHERE name LIKE '%' || ? || '%' 
+				`)
+			}
 		}
 
-		const results = statement.all(searchParam) as PersonRecord[]
+		const results =
+			searchParam === ''
+				? (statement.all() as PersonRecord)
+				: (statement.all(searchParam) as PersonRecord[])
 
 		db.close()
 
