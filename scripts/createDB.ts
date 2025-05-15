@@ -44,7 +44,7 @@ async function main() {
 		db.exec(`
 			CREATE TABLE IF NOT EXISTS departments (
 			name TEXT NOT NULL,
-			id TEXT PRIMARY KEY,
+			id INTEGER PRIMARY KEY,
 			parent_id TEXT,
 			FOREIGN KEY (parent_id) REFERENCES departments (id) ON DELETE SET NULL
 			)
@@ -52,7 +52,7 @@ async function main() {
 
 		db.exec(`
 			CREATE TABLE IF NOT EXISTS people (
-				id TEXT PRIMARY KEY,
+				id INTEGER PRIMARY KEY,
 				name TEXT NOT NULL,
 				avatar_url TEXT,
 				department_name TEXT,

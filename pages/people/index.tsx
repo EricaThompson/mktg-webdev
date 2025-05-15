@@ -37,8 +37,8 @@ export const getStaticProps: GetStaticProps = async () => {
 				departmentTree: data.departmentTree,
 			},
 		}
-	} catch (error) {
-		console.error('Error loading data:', error)
+	} catch (err) {
+		console.error('Error loading data:', err)
 		return {
 			props: {
 				allPeople: [],
@@ -69,8 +69,8 @@ export default function PeoplePage({
 				const response = await fetch(`/api/hashicorp${queryParam}`)
 				const data = await response.json()
 				setPeople(data.results)
-			} catch (error) {
-				console.error('Error fetching people:', error)
+			} catch (err) {
+				console.error('Error fetching people:', err)
 				setPeople([])
 			} finally {
 				setLoading(false)
@@ -100,32 +100,40 @@ export default function PeoplePage({
 			</div>
 			<aside>
 				{/* <DepartmentFilter
-                    filteredDepartmentIds={filteredDepartments.map(dept => dept.id)}
-                    clearFiltersHandler={() => setFilteredDepartments([])}
-                    selectFilterHandler={(departmentFilter: Department) => {
-                        // const totalDepartmentFilter = findDepartments(departmentTree, departmentFilter.id)
-                        // setFilteredDepartments(totalDepartmentFilter)
-                    }}
-                    departmentTree={departmentTree}
-                /> */}
+						filteredDepartmentIds={filteredDepartmentIds}
+						clearFiltersHandler={() => {
+							setFilteredDepartments([])
+						}}
+						selectFilterHandler={(departmentFilter: Department) => {
+							const totalDepartmentFilter = findDepartments(
+								departmentTree,
+								departmentFilter.id
+							)
+							setFilteredDepartments(totalDepartmentFilter)
+						}}
+						departmentTree={departmentTree}
+					/> */}
 			</aside>
 			{loading ? (
 				<div>Loading...</div>
 			) : (
 				<ul>
-					{displayedPeople.length === 0 && <div>No results found.</div>}
-					{displayedPeople.map((person: PersonRecord) => {
-						return (
-							<li key={person.id}>
-								<Profile
-									imgUrl={person['avatar_url']}
-									name={person.name}
-									title={person.title}
-									department={person['department_name']}
-								/>
-							</li>
-						)
-					})}
+					{displayedPeople.length === 0 ? (
+						<div>No results found.</div>
+					) : (
+						displayedPeople.map((person: PersonRecord) => {
+							return (
+								<li key={person.id}>
+									<Profile
+										imgUrl={person['avatar_url']}
+										name={person.name}
+										title={person.title}
+										department={person['department_name']}
+									/>
+								</li>
+							)
+						})
+					)}
 				</ul>
 			)}
 		</main>
