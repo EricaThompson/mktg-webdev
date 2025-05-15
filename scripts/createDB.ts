@@ -6,31 +6,7 @@
 import Database from 'better-sqlite3'
 import { executeQuery } from '@datocms/cda-client'
 import 'dotenv/config'
-
-interface Department {
-	name: string
-	id: string
-	parent: {
-		id: string
-	} | null
-}
-
-interface Person {
-	id: string
-	name: string
-	avatar: {
-		url: string
-	} | null
-	department: {
-		id: string
-		name: string
-	} | null
-}
-
-interface Response {
-	allDepartments: Department[]
-	allPeople: Person[]
-}
+import { ApiResponse } from 'types'
 
 const query = `query {
  allDepartments(first: 100) {
@@ -61,33 +37,33 @@ async function main() {
 
 	const result = (await executeQuery(query, {
 		token: DATO_API_TOKEN,
-	})) as Response
+	})) as ApiResponse
 
 	try {
 		db.exec(`
-     CREATE TABLE IF NOT EXISTS departments (
-       name TEXT NOT NULL,
-       id TEXT PRIMARY KEY,
-       parent_id TEXT,
-       FOREIGN KEY (parent_id) REFERENCES departments (id) ON DELETE SET NULL
-     )
-   `)
+			CREATE TABLE IF NOT EXISTS departments (
+			name TEXT NOT NULL,
+			id TEXT PRIMARY KEY,
+			parent_id TEXT,
+			FOREIGN KEY (parent_id) REFERENCES departments (id) ON DELETE SET NULL
+			)
+   		`)
 
 		db.exec(`
-       CREATE TABLE IF NOT EXISTS people (
-         id TEXT PRIMARY KEY,
-         name TEXT NOT NULL,
-         avatar_url TEXT,
-         department_name TEXT,
-         department_id TEXT NULL,
-         FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE SET NULL
-       )
-     `)
+			CREATE TABLE IF NOT EXISTS people (
+				id TEXT PRIMARY KEY,
+				name TEXT NOT NULL,
+				avatar_url TEXT,
+				department_name TEXT,
+				department_id TEXT NULL,
+				FOREIGN KEY (department_id) REFERENCES departments (id) ON DELETE SET NULL
+			)
+			`)
 
 		const addDepartment = db.prepare(`
-     INSERT OR REPLACE INTO departments (name, id, parent_id)
-     VALUES (?, ?, ?)
-   `)
+			INSERT OR REPLACE INTO departments (name, id, parent_id)
+			VALUES (?, ?, ?)
+		`)
 
 		const addDepartments = db.transaction((departments) => {
 			for (const dept of departments) {
@@ -100,9 +76,9 @@ async function main() {
 		})
 
 		const addPerson = db.prepare(`
-     INSERT OR REPLACE INTO people (id, name, avatar_url, department_name, department_id)
-     VALUES ($id, $name, $avatar_url, $department_name, $department_id)
-   `)
+			INSERT OR REPLACE INTO people (id, name, avatar_url, department_name, department_id)
+			VALUES ($id, $name, $avatar_url, $department_name, $department_id)
+		`)
 
 		const addPeople = db.transaction((people) => {
 			for (const person of people) {

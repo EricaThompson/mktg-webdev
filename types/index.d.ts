@@ -27,3 +27,8 @@ export interface PersonRecord {
 	}
 	department?: Department
 }
+
+export interface ApiResponse {
+	allDepartments: Department[]
+	allPeople: PersonRecord[]
+}
