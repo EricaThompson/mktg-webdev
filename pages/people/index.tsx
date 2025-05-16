@@ -63,9 +63,17 @@ export default function PeoplePage({
 	useEffect(() => {
 		const fetchPeople = async () => {
 			setLoading(true)
+			let queryParam = ''
 			try {
-				const queryParam =
-					searchingName.trim() !== '' ? `?search=${searchingName.trim()}` : ''
+				if (hideNoPicture) {
+					queryParam += '?hideNoPicture=true'
+				}
+				if (searchingName.trim()) {
+					queryParam += queryParam
+						? `&search=${encodeURIComponent(searchingName.trim())}`
+						: `?search=${encodeURIComponent(searchingName.trim())}`
+				}
+
 				const response = await fetch(`/api/hashicorp${queryParam}`)
 				const data = await response.json()
 				setPeople(data.results)
@@ -79,15 +87,7 @@ export default function PeoplePage({
 
 		const timeoutId = setTimeout(fetchPeople, 300)
 		return () => clearTimeout(timeoutId)
-	}, [searchingName])
-
-	const displayedPeople = people.filter((person) => {
-		if (hideNoPicture && person['avatar_url'] === null) {
-			return
-		} else {
-			return person
-		}
-	})
+	}, [searchingName, hideNoPicture])
 
 	return (
 		<main className="g-grid-container">
@@ -118,10 +118,10 @@ export default function PeoplePage({
 				<div>Loading...</div>
 			) : (
 				<ul>
-					{displayedPeople.length === 0 ? (
+					{people.length === 0 ? (
 						<div>No results found.</div>
 					) : (
-						displayedPeople.map((person: PersonRecord) => {
+						people.map((person: PersonRecord) => {
 							return (
 								<li key={person.id}>
 									<Profile

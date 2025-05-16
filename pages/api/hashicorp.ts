@@ -18,6 +18,7 @@ export default function handler(
 ) {
 	const { query } = req
 	const searchParam = (query.search as string) || ''
+	const hideNoPicture = (query.hideNoPicture as string) || ''
 
 	try {
 		const db = new Database('hashicorp.sqlite')
@@ -29,20 +30,25 @@ export default function handler(
 			SELECT *
 			FROM people
 		`)
-		} else {
-			if (isDepartmentId) {
-				statement = db.prepare(`
+		} else if (hideNoPicture === 'true') {
+			statement = db.prepare(`
+					SELECT *
+					FROM people
+					WHERE avatar_url IS NOT NULL
+					AND name LIKE '%' || ? || '%' 
+				`)
+		} else if (isDepartmentId) {
+			statement = db.prepare(`
 					SELECT *
 					FROM people
 					WHERE department_id = ? 
 				`)
-			} else {
-				statement = db.prepare(`
-					SELECT *
-					FROM people
-					WHERE name LIKE '%' || ? || '%' 
-				`)
-			}
+		} else {
+			statement = db.prepare(`
+				SELECT *
+				FROM people
+				WHERE name LIKE '%' || ? || '%' 
+			`)
 		}
 
 		const results =
