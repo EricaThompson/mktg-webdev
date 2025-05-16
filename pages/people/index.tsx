@@ -139,13 +139,14 @@ export default function PeoplePage({
 
 	return (
 		<main className="g-grid-container">
-			<div>
+			<section className={style['search-container']}>
 				<h1>HashiCorp Humans</h1>
+				<h5>Find a HashiCorp human</h5>
 				<Search
 					onInputChange={(e) => setSearchingName(e.target.value)}
 					onProfileChange={(e) => setHideNoPicture(e.target.checked)}
 				/>
-			</div>
+			</section>
 			<section className={style['department-results-container']}>
 				<aside>
 					<DepartmentFilter
@@ -166,13 +167,13 @@ export default function PeoplePage({
 				{loading ? (
 					<div>Loading...</div>
 				) : (
-					<ul>
+					<ul className={style['people-results']}>
 						{people.length === 0 ? (
 							<div>No results found.</div>
 						) : (
 							people.map((person: PersonRecord) => {
 								return (
-									<li key={person.id}>
+									<li className={style['person']} key={person.id}>
 										<Profile
 											imgUrl={person['avatar_url']}
 											name={person.name}

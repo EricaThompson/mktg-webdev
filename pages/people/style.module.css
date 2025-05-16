@@ -3,13 +3,21 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-/* your styles here! */
-ul {
-    list-style: none;
+.search-container {
+	text-align: center;
 }
 
 .department-results-container {
 	display: flex;
+}
+
+.people-results {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 1rem;
+}
+.person {
+	list-style: none;
 }
 
 /* you can use standard css plus anything from postcss-preset-env */

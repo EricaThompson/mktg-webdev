@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
+import style from './style.module.css'
 export interface SearchProps {
 	onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 	onProfileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
@@ -20,7 +21,7 @@ export default function Search({
 				onChange={onInputChange}
 			/>
 
-			<div>
+			<div className={style['checkbox-container']}>
 				<input type="checkbox" onChange={onProfileChange} />
 				<div>Hide people missing a profile image</div>
 			</div>
