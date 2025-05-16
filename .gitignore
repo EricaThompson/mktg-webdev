@@ -6,4 +6,3 @@ out
 *.sqlite
 hashicorp.sqlite-shm
 hashicorp.sqlite-wal
-plan.md
