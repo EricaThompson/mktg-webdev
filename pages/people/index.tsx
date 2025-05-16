@@ -29,13 +29,13 @@ export const getStaticProps: GetStaticProps = async () => {
 
 		const data = {
 			allPeople: result.allPeople,
-			departmentTree: departmentRecordsToDepartmentTree(result.allDepartments),
+			allDepartments: result.allDepartments,
 		}
 
 		return {
 			props: {
 				allPeople: data.allPeople,
-				departmentTree: data.departmentTree,
+				departmentTree: departmentRecordsToDepartmentTree(data.allDepartments),
 			},
 		}
 	} catch (err) {
@@ -131,6 +131,11 @@ export default function PeoplePage({
 		return () => clearTimeout(timeoutId)
 	}, [searchingName, hideNoPicture, router.isReady])
 
+	const filteredDepartmentIds = filteredDepartments.reduce(
+		(acc: string[], department: DepartmentNode) => [...acc, department.id],
+		[]
+	)
+
 	return (
 		<main className="g-grid-container">
 			<div>
@@ -140,8 +145,9 @@ export default function PeoplePage({
 					onProfileChange={(e) => setHideNoPicture(e.target.checked)}
 				/>
 			</div>
-			<aside>
-				{/* <DepartmentFilter
+			<section style={{ display: 'flex' }}>
+				<aside>
+					<DepartmentFilter
 						filteredDepartmentIds={filteredDepartmentIds}
 						clearFiltersHandler={() => {
 							setFilteredDepartments([])
@@ -154,30 +160,31 @@ export default function PeoplePage({
 							setFilteredDepartments(totalDepartmentFilter)
 						}}
 						departmentTree={departmentTree}
-					/> */}
-			</aside>
-			{loading ? (
-				<div>Loading...</div>
-			) : (
-				<ul>
-					{people.length === 0 ? (
-						<div>No results found.</div>
-					) : (
-						people.map((person: PersonRecord) => {
-							return (
-								<li key={person.id}>
-									<Profile
-										imgUrl={person['avatar_url']}
-										name={person.name}
-										title={person.title}
-										department={person['department_name']}
-									/>
-								</li>
-							)
-						})
-					)}
-				</ul>
-			)}
+					/>
+				</aside>
+				{loading ? (
+					<div>Loading...</div>
+				) : (
+					<ul>
+						{people.length === 0 ? (
+							<div>No results found.</div>
+						) : (
+							people.map((person: PersonRecord) => {
+								return (
+									<li key={person.id}>
+										<Profile
+											imgUrl={person['avatar_url']}
+											name={person.name}
+											title={person.title}
+											department={person['department_name']}
+										/>
+									</li>
+								)
+							})
+						)}
+					</ul>
+				)}
+			</section>
 		</main>
 	)
 }
