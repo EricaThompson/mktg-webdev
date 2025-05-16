@@ -12,6 +12,7 @@ import {
 import Profile from 'components/profile'
 import Search from 'components/search'
 import DepartmentFilter from 'components/departmentFilter'
+import style from './style.module.css'
 
 interface Props {
 	allPeople: PersonRecord[]
@@ -145,7 +146,7 @@ export default function PeoplePage({
 					onProfileChange={(e) => setHideNoPicture(e.target.checked)}
 				/>
 			</div>
-			<section style={{ display: 'flex' }}>
+			<section className={style['department-results-container']}>
 				<aside>
 					<DepartmentFilter
 						filteredDepartmentIds={filteredDepartmentIds}

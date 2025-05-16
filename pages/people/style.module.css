@@ -4,6 +4,13 @@
  */
 
 /* your styles here! */
+ul {
+    list-style: none;
+}
+
+.department-results-container {
+	display: flex;
+}
 
 /* you can use standard css plus anything from postcss-preset-env */
 
