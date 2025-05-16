@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { executeQuery } from '@datocms/cda-client'
 import { GetStaticProps } from 'next'
+import { useRouter } from 'next/router'
 import { PersonRecord, DepartmentNode, DepartmentTree, Department } from 'types'
 import BaseLayout from '../../layouts/base'
 import query from './query.graphql'
@@ -52,6 +53,7 @@ export default function PeoplePage({
 	allPeople,
 	departmentTree,
 }: Props): React.ReactElement {
+	const router = useRouter()
 	const [searchingName, setSearchingName] = useState('')
 	const [hideNoPicture, setHideNoPicture] = useState(false)
 	const [filteredDepartments, setFilteredDepartments] = useState<
@@ -61,17 +63,52 @@ export default function PeoplePage({
 	const [loading, setLoading] = useState(false)
 
 	useEffect(() => {
+		if (!router.isReady) {
+			return
+		}
+
+		const { search, hideNoPicture: hideNoPictureParam } = router.query
+
+		if (search && typeof search === 'string' && search !== searchingName) {
+			setSearchingName(search)
+		}
+
+		const shouldHideNoPicture = hideNoPictureParam === 'true'
+		if (shouldHideNoPicture !== hideNoPicture) {
+			setHideNoPicture(shouldHideNoPicture)
+		}
+	}, [router.isReady, router.query])
+
+	useEffect(() => {
+		if (!router.isReady) {
+			return
+		}
 		const fetchPeople = async () => {
 			setLoading(true)
-			let queryParam = ''
 			try {
-				if (hideNoPicture) {
-					queryParam += '?hideNoPicture=true'
-				}
+				const query = {}
+
 				if (searchingName.trim()) {
-					queryParam += queryParam
-						? `&search=${encodeURIComponent(searchingName.trim())}`
-						: `?search=${encodeURIComponent(searchingName.trim())}`
+					query['search'] = searchingName.trim()
+				}
+
+				if (hideNoPicture) {
+					query['hideNoPicture'] = 'true'
+				}
+
+				router.push(
+					{
+						pathname: router.pathname,
+						query,
+					},
+					undefined,
+					{ shallow: true }
+				)
+
+				let queryParam = ''
+				const params = new URLSearchParams(query).toString()
+				if (params) {
+					queryParam = `?${params}`
 				}
 
 				const response = await fetch(`/api/hashicorp${queryParam}`)
@@ -87,7 +124,7 @@ export default function PeoplePage({
 
 		const timeoutId = setTimeout(fetchPeople, 300)
 		return () => clearTimeout(timeoutId)
-	}, [searchingName, hideNoPicture])
+	}, [searchingName, hideNoPicture, router.isReady])
 
 	return (
 		<main className="g-grid-container">
