@@ -106,9 +106,14 @@ export default function PeoplePage({
 				)
 
 				let queryParam = ''
-				const params = new URLSearchParams(query).toString()
-				if (params) {
-					queryParam = `?${params}`
+				if (hideNoPicture) {
+					queryParam += '?hideNoPicture=true'
+				}
+
+				if (searchingName.trim()) {
+					queryParam += queryParam
+						? `&search=${encodeURIComponent(searchingName.trim())}`
+						: `?search=${encodeURIComponent(searchingName.trim())}`
 				}
 
 				const response = await fetch(`/api/hashicorp${queryParam}`)
