@@ -75,7 +75,11 @@ export default function PeoplePage({
 			return
 		}
 
-		const { search, hideNoPicture: hideNoPictureParam } = router.query
+		const {
+			search,
+			hideNoPicture: hideNoPictureParam,
+			department,
+		} = router.query
 
 		if (search && typeof search === 'string' && search !== searchingName) {
 			setSearchingName(search)
@@ -86,8 +90,8 @@ export default function PeoplePage({
 			setHideNoPicture(shouldHideNoPicture)
 		}
 
-		if (router.query.department && typeof router.query.department === 'string') {
-			setchosenDepartment(router.query.department)
+		if (department && typeof department === 'string') {
+			setchosenDepartment(department)
 		} else {
 			setchosenDepartment(null)
 		}
@@ -183,15 +187,11 @@ export default function PeoplePage({
 								departmentFilter.id
 							)
 							setFilteredDepartments(totalDepartmentFilter)
-							// const chosenDepartments = totalDepartmentFilter.map(
-							// 	(department) => department.id
-							// )
 
 							const departmentString = totalDepartmentFilter
 								.map((dept) => dept.id)
 								.join(',')
 
-							console.log('tdf', totalDepartmentFilter)
 							setchosenDepartment(departmentString)
 						}}
 						departmentTree={departmentTree}
