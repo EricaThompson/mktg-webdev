@@ -180,6 +180,19 @@ export default function PeoplePage({
 						filteredDepartmentIds={filteredDepartmentIds}
 						clearFiltersHandler={() => {
 							setFilteredDepartments([])
+							setchosenDepartment(null)
+
+							const newQuery = { ...router.query }
+							delete newQuery.department
+
+							router.push(
+								{
+									pathname: router.pathname,
+									query: newQuery,
+								},
+								undefined,
+								{ shallow: true }
+							)
 						}}
 						selectFilterHandler={(departmentFilter: Department) => {
 							const totalDepartmentFilter = findChildrenDepartments(
