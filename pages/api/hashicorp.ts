@@ -5,7 +5,7 @@
 
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { PersonRecord } from 'types'
-import Database from 'better-sqlite3'
+import db from '../../sources/db'
 import 'dotenv/config'
 
 type ResponseData = {
@@ -27,7 +27,6 @@ export default function handler(
 	let results: PersonRecord[]
 
 	try {
-		const db = new Database('hashicorp.sqlite')
 		let statement = null
 
 		statement = db.prepare(`
@@ -67,8 +66,6 @@ export default function handler(
 		if (hideNoPicture) {
 			results = results.filter((person) => person['avatar_url'] !== null)
 		}
-
-		db.close()
 
 		res.status(200).json({ results })
 	} catch (err) {

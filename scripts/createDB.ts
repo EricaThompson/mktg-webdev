@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
-import Database from 'better-sqlite3'
 import { executeQuery } from '@datocms/cda-client'
 import 'dotenv/config'
 import { ApiResponse } from 'types'
+import db from '../sources/db'
 
 const query = `query {
  allDepartments(first: 100) {
@@ -33,7 +33,6 @@ const query = `query {
 const DATO_API_TOKEN = process.env.DATO_API_TOKEN
 
 async function main() {
-	const db = new Database('hashicorp.sqlite')
 	db.pragma('journal_mode = WAL')
 
 	const result = (await executeQuery(query, {
@@ -107,8 +106,6 @@ async function main() {
 		addPeople(result.allPeople)
 	} catch (err) {
 		console.error('Error adding data into database:', err)
-	} finally {
-		db.close()
 	}
 }
 
