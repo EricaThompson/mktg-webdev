@@ -1,3 +1,7 @@
+/**
+ * Copyright (c) HashiCorp, Inc.
+ * SPDX-License-Identifier: MPL-2.0
+ */
 import React, { useState, useEffect } from 'react'
 import { executeQuery } from '@datocms/cda-client'
 import { GetStaticProps } from 'next'
@@ -6,7 +10,7 @@ import { PersonRecord, DepartmentNode, DepartmentTree, Department } from 'types'
 import BaseLayout from '../../layouts/base'
 import query from './query.graphql'
 import {
-	findDepartments,
+	findChildrenDepartments,
 	departmentRecordsToDepartmentTree,
 } from '../../utilities'
 import Profile from 'components/profile'
@@ -61,7 +65,10 @@ export default function PeoplePage({
 		DepartmentNode[]
 	>([])
 	const [people, setPeople] = useState<PersonRecord[]>(allPeople)
+	const [chosenDepartment, setchosenDepartment] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
+
+	console.log('cur dept: ', chosenDepartment)
 
 	useEffect(() => {
 		if (!router.isReady) {
@@ -77,6 +84,12 @@ export default function PeoplePage({
 		const shouldHideNoPicture = hideNoPictureParam === 'true'
 		if (shouldHideNoPicture !== hideNoPicture) {
 			setHideNoPicture(shouldHideNoPicture)
+		}
+
+		if (router.query.department && typeof router.query.department === 'string') {
+			setchosenDepartment(router.query.department)
+		} else {
+			setchosenDepartment(null)
 		}
 	}, [router.isReady, router.query])
 
@@ -95,6 +108,10 @@ export default function PeoplePage({
 
 				if (hideNoPicture) {
 					query['hideNoPicture'] = 'true'
+				}
+
+				if (chosenDepartment) {
+					query['department'] = chosenDepartment
 				}
 
 				router.push(
@@ -117,6 +134,12 @@ export default function PeoplePage({
 						: `?search=${encodeURIComponent(searchingName.trim())}`
 				}
 
+				if (chosenDepartment) {
+					queryParam += queryParam
+						? `&department=${chosenDepartment}`
+						: `?department=${chosenDepartment}`
+				}
+
 				const response = await fetch(`/api/hashicorp${queryParam}`)
 				const data = await response.json()
 				setPeople(data.results)
@@ -130,7 +153,7 @@ export default function PeoplePage({
 
 		const timeoutId = setTimeout(fetchPeople, 300)
 		return () => clearTimeout(timeoutId)
-	}, [searchingName, hideNoPicture, router.isReady])
+	}, [searchingName, hideNoPicture, router.isReady, chosenDepartment])
 
 	const filteredDepartmentIds = filteredDepartments.reduce(
 		(acc: string[], department: DepartmentNode) => [...acc, department.id],
@@ -155,11 +178,21 @@ export default function PeoplePage({
 							setFilteredDepartments([])
 						}}
 						selectFilterHandler={(departmentFilter: Department) => {
-							const totalDepartmentFilter = findDepartments(
+							const totalDepartmentFilter = findChildrenDepartments(
 								departmentTree,
 								departmentFilter.id
 							)
 							setFilteredDepartments(totalDepartmentFilter)
+							// const chosenDepartments = totalDepartmentFilter.map(
+							// 	(department) => department.id
+							// )
+
+							const departmentString = totalDepartmentFilter
+								.map((dept) => dept.id)
+								.join(',')
+
+							console.log('tdf', totalDepartmentFilter)
+							setchosenDepartment(departmentString)
 						}}
 						departmentTree={departmentTree}
 					/>
