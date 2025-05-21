@@ -30,34 +30,38 @@ export default function handler(
 		const db = new Database('hashicorp.sqlite')
 		let statement = null
 
-		if (departmentSort) {
+		if (departmentSort && searchParam !== '') {
+			statement = db.prepare(`
+					SELECT *
+					FROM people
+					WHERE department_id IN (${placeholders})
+					AND name LIKE '%' || ? || '%' 
+				`)
+			results = statement.all(...departmentIds, searchParam) as PersonRecord[]
+		} else if (searchParam !== '' && departmentSort === '') {
+			statement = db.prepare(`
+					SELECT *
+					FROM people
+					WHERE name LIKE '%' || ? || '%'
+				`)
+			results = statement.all(searchParam) as PersonRecord[]
+		} else if (departmentSort && searchParam === '') {
 			statement = db.prepare(`
 					SELECT *
 					FROM people
 					WHERE department_id IN (${placeholders})
 				`)
 			results = statement.all(...departmentIds) as PersonRecord[]
-		} else if (searchParam === '') {
-			statement = db.prepare(`
-					SELECT *
-					FROM people
-				`)
-			results = statement.all() as PersonRecord[]
-		} else if (hideNoPicture === 'true') {
-			statement = db.prepare(`
-					SELECT *
-					FROM people
-					WHERE avatar_url IS NOT NULL
-					AND name LIKE '%' || ? || '%' 
-				`)
-			results = statement.all(searchParam) as PersonRecord[]
 		} else {
 			statement = db.prepare(`
 				SELECT *
 				FROM people
-				WHERE name LIKE '%' || ? || '%' 
 			`)
-			results = statement.all(searchParam) as PersonRecord[]
+			results = statement.all() as PersonRecord[]
+		}
+
+		if (hideNoPicture) {
+			results = results.filter((person) => person['avatar_url'] !== null)
 		}
 
 		db.close()
