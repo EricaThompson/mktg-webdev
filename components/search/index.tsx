@@ -22,8 +22,14 @@ export default function Search({
 			/>
 
 			<div className={style['checkbox-container']}>
-				<input type="checkbox" onChange={onProfileChange} />
-				<div>Hide people missing a profile image</div>
+				<input
+					id="hide-no-profile"
+					type="checkbox"
+					onChange={onProfileChange}
+				/>
+				<label htmlFor="hide-no-profile">
+					Hide people missing a profile image
+				</label>
 			</div>
 		</>
 	)
