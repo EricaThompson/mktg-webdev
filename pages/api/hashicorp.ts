@@ -19,17 +19,30 @@ export default function handler(
 	const { query } = req
 	const searchParam = (query.search as string) || ''
 	const hideNoPicture = (query.hideNoPicture as string) || ''
+	const departmentSort = (query.department as string) || ''
+	const departmentIds = departmentSort.split(',')
+	const placeholders = departmentIds.map(() => '?').join(', ')
+	console.log('depart:', departmentSort)
+
+	let results: PersonRecord[]
 
 	try {
 		const db = new Database('hashicorp.sqlite')
-		const isDepartmentId = !isNaN(Number(searchParam))
 		let statement = null
 
-		if (searchParam === '') {
+		if (departmentSort) {
 			statement = db.prepare(`
-			SELECT *
-			FROM people
-		`)
+					SELECT *
+					FROM people
+					WHERE department_id IN (${placeholders})
+				`)
+			results = statement.all(...departmentIds) as PersonRecord[]
+		} else if (searchParam === '') {
+			statement = db.prepare(`
+					SELECT *
+					FROM people
+				`)
+			results = statement.all() as PersonRecord[]
 		} else if (hideNoPicture === 'true') {
 			statement = db.prepare(`
 					SELECT *
@@ -37,24 +50,15 @@ export default function handler(
 					WHERE avatar_url IS NOT NULL
 					AND name LIKE '%' || ? || '%' 
 				`)
-		} else if (isDepartmentId) {
-			statement = db.prepare(`
-					SELECT *
-					FROM people
-					WHERE department_id = ? 
-				`)
+			results = statement.all(searchParam) as PersonRecord[]
 		} else {
 			statement = db.prepare(`
 				SELECT *
 				FROM people
 				WHERE name LIKE '%' || ? || '%' 
 			`)
+			results = statement.all(searchParam) as PersonRecord[]
 		}
-
-		const results =
-			searchParam === ''
-				? (statement.all() as PersonRecord[])
-				: (statement.all(searchParam) as PersonRecord[])
 
 		db.close()
 
