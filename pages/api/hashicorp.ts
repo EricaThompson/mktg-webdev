@@ -30,6 +30,12 @@ export default function handler(
 		const db = new Database('hashicorp.sqlite')
 		let statement = null
 
+		statement = db.prepare(`
+				SELECT *
+				FROM people
+			`)
+		results = statement.all() as PersonRecord[]
+
 		if (departmentSort && searchParam !== '') {
 			statement = db.prepare(`
 					SELECT *
@@ -38,26 +44,24 @@ export default function handler(
 					AND name LIKE '%' || ? || '%' 
 				`)
 			results = statement.all(...departmentIds, searchParam) as PersonRecord[]
-		} else if (searchParam !== '' && departmentSort === '') {
+		}
+
+		if (searchParam !== '' && departmentSort === '') {
 			statement = db.prepare(`
 					SELECT *
 					FROM people
 					WHERE name LIKE '%' || ? || '%'
 				`)
 			results = statement.all(searchParam) as PersonRecord[]
-		} else if (departmentSort && searchParam === '') {
+		}
+
+		if (departmentSort && searchParam === '') {
 			statement = db.prepare(`
 					SELECT *
 					FROM people
 					WHERE department_id IN (${placeholders})
 				`)
 			results = statement.all(...departmentIds) as PersonRecord[]
-		} else {
-			statement = db.prepare(`
-				SELECT *
-				FROM people
-			`)
-			results = statement.all() as PersonRecord[]
 		}
 
 		if (hideNoPicture) {
