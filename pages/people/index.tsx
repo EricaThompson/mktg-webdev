@@ -60,7 +60,7 @@ export default function PeoplePage({
 }: Props): React.ReactElement {
 	const router = useRouter()
 	const [searchingName, setSearchingName] = useState('')
-	const [hideNoPicture, setHideNoPicture] = useState(false)
+	const [hideNoImage, sethideNoImage] = useState(false)
 	const [filteredDepartments, setFilteredDepartments] = useState<
 		DepartmentNode[]
 	>([])
@@ -68,26 +68,20 @@ export default function PeoplePage({
 	const [chosenDepartment, setchosenDepartment] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
 
-	console.log('cur dept: ', chosenDepartment)
-
 	useEffect(() => {
 		if (!router.isReady) {
 			return
 		}
 
-		const {
-			search,
-			hideNoPicture: hideNoPictureParam,
-			department,
-		} = router.query
+		const { search, hideNoImage: hideNoImageParam, department } = router.query
 
 		if (search && typeof search === 'string' && search !== searchingName) {
 			setSearchingName(search)
 		}
 
-		const shouldHideNoPicture = hideNoPictureParam === 'true'
-		if (shouldHideNoPicture !== hideNoPicture) {
-			setHideNoPicture(shouldHideNoPicture)
+		const shouldHideNoImage = hideNoImageParam === 'true'
+		if (shouldHideNoImage !== hideNoImage) {
+			sethideNoImage(shouldHideNoImage)
 		}
 
 		if (department && typeof department === 'string') {
@@ -110,8 +104,8 @@ export default function PeoplePage({
 					query['search'] = searchingName.trim()
 				}
 
-				if (hideNoPicture) {
-					query['hideNoPicture'] = 'true'
+				if (hideNoImage) {
+					query['hideNoImage'] = 'true'
 				}
 
 				if (chosenDepartment) {
@@ -128,8 +122,8 @@ export default function PeoplePage({
 				)
 
 				let queryParam = ''
-				if (hideNoPicture) {
-					queryParam += '?hideNoPicture=true'
+				if (hideNoImage) {
+					queryParam += '?hideNoImage=true'
 				}
 
 				if (searchingName.trim()) {
@@ -157,7 +151,7 @@ export default function PeoplePage({
 
 		const timeoutId = setTimeout(fetchPeople, 300)
 		return () => clearTimeout(timeoutId)
-	}, [searchingName, hideNoPicture, router.isReady, chosenDepartment])
+	}, [searchingName, hideNoImage, router.isReady, chosenDepartment])
 
 	const filteredDepartmentIds = filteredDepartments.reduce(
 		(acc: string[], department: DepartmentNode) => [...acc, department.id],
@@ -171,7 +165,8 @@ export default function PeoplePage({
 				<h5>Find a HashiCorp human</h5>
 				<Search
 					onInputChange={(e) => setSearchingName(e.target.value)}
-					onProfileChange={(e) => setHideNoPicture(e.target.checked)}
+					onProfileChange={(e) => sethideNoImage(e.target.checked)}
+					hideNoImageChecked={hideNoImage}
 				/>
 			</section>
 			<section className={style['department-results-container']}>

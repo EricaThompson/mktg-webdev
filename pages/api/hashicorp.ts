@@ -18,11 +18,10 @@ export default function handler(
 ) {
 	const { query } = req
 	const searchParam = (query.search as string) || ''
-	const hideNoPicture = (query.hideNoPicture as string) || ''
+	const hideNoImage = (query.hideNoImage as string) || ''
 	const departmentSort = (query.department as string) || ''
 	const departmentIds = departmentSort.split(',')
 	const placeholders = departmentIds.map(() => '?').join(', ')
-	console.log('depart:', departmentSort)
 
 	let results: PersonRecord[]
 
@@ -63,7 +62,7 @@ export default function handler(
 			results = statement.all(...departmentIds) as PersonRecord[]
 		}
 
-		if (hideNoPicture) {
+		if (hideNoImage) {
 			results = results.filter((person) => person['avatar_url'] !== null)
 		}
 

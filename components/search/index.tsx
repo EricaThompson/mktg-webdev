@@ -7,11 +7,13 @@ import style from './style.module.css'
 export interface SearchProps {
 	onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 	onProfileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+	hideNoImageChecked: boolean
 }
 
 export default function Search({
 	onInputChange,
 	onProfileChange,
+	hideNoImageChecked,
 }: SearchProps) {
 	return (
 		<>
@@ -26,6 +28,7 @@ export default function Search({
 					id="hide-no-profile"
 					type="checkbox"
 					onChange={onProfileChange}
+					checked={hideNoImageChecked}
 				/>
 				<label htmlFor="hide-no-profile">
 					Hide people missing a profile image
