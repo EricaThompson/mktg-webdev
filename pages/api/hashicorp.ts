@@ -22,43 +22,45 @@ export default function handler(
 	const departmentSort = (query.department as string) || ''
 	const departmentIds = departmentSort.split(',')
 	const placeholders = departmentIds.map(() => '?').join(', ')
+	const baseQuery = `
+		SELECT * FROM people`
+	const departmentQuery = `
+		WHERE department_id IN (${placeholders})`
+	const nameQuery = `
+		name LIKE '%' || ? || '%'`
 
 	let results: PersonRecord[]
 
 	try {
 		let statement = null
 
-		statement = db.prepare(`
-				SELECT *
-				FROM people
-			`)
+		statement = db.prepare(baseQuery)
+
 		results = statement.all() as PersonRecord[]
 
 		if (departmentSort && searchParam !== '') {
-			statement = db.prepare(`
-					SELECT *
-					FROM people
-					WHERE department_id IN (${placeholders})
-					AND name LIKE '%' || ? || '%' 
-				`)
+			statement = db.prepare(
+				baseQuery +
+					departmentQuery +
+					`
+				AND ` +
+					nameQuery
+			)
 			results = statement.all(...departmentIds, searchParam) as PersonRecord[]
 		}
 
 		if (searchParam !== '' && departmentSort === '') {
-			statement = db.prepare(`
-					SELECT *
-					FROM people
-					WHERE name LIKE '%' || ? || '%'
-				`)
+			statement = db.prepare(
+				baseQuery +
+					`
+				WHERE ` +
+					nameQuery
+			)
 			results = statement.all(searchParam) as PersonRecord[]
 		}
 
 		if (departmentSort && searchParam === '') {
-			statement = db.prepare(`
-					SELECT *
-					FROM people
-					WHERE department_id IN (${placeholders})
-				`)
+			statement = db.prepare(baseQuery + departmentQuery)
 			results = statement.all(...departmentIds) as PersonRecord[]
 		}
 
