@@ -17,6 +17,8 @@ import Profile from 'components/profile'
 import Search from 'components/search'
 import DepartmentFilter from 'components/departmentFilter'
 import style from './style.module.css'
+import { useFetchPeople } from 'hooks/useFetchPeople'
+import { useFilterQuery } from 'hooks/useFilterQuery'
 
 interface Props {
 	allPeople: PersonRecord[]
@@ -68,90 +70,50 @@ export default function PeoplePage({
 	const [chosenDepartment, setchosenDepartment] = useState<string | null>(null)
 	const [loading, setLoading] = useState(false)
 
-	useEffect(() => {
-		if (!router.isReady) {
-			return
-		}
+	useFilterQuery({
+		setSearchingName,
+		setHideNoImage: sethideNoImage,
+		setChosenDepartment: setchosenDepartment,
+	})
 
-		const { search, hideNoImage: hideNoImageParam, department } = router.query
+	useFetchPeople({
+		searchingName,
+		hideNoImage,
+		chosenDepartment,
+		setPeople,
+		setLoading,
+	})
 
-		if (search && typeof search === 'string' && search !== searchingName) {
-			setSearchingName(search)
-		}
+	function clearFiltersHandler() {
+		setFilteredDepartments([])
+		setchosenDepartment(null)
 
-		const shouldHideNoImage = hideNoImageParam === 'true'
-		if (shouldHideNoImage !== hideNoImage) {
-			sethideNoImage(shouldHideNoImage)
-		}
+		const newQuery = { ...router.query }
+		delete newQuery.department
 
-		if (department && typeof department === 'string') {
-			setchosenDepartment(department)
-		} else {
-			setchosenDepartment(null)
-		}
-	}, [router.isReady, router.query])
+		router.push(
+			{
+				pathname: router.pathname,
+				query: newQuery,
+			},
+			undefined,
+			{ shallow: true }
+		)
+	}
 
-	useEffect(() => {
-		if (!router.isReady) {
-			return
-		}
-		const fetchPeople = async () => {
-			setLoading(true)
-			try {
-				const query = {}
+	function selectFilterHandler(departmentFilter: Department) {
+		const totalDepartmentFilter = findChildrenDepartments(
+			departmentTree,
+			departmentFilter.id
+		)
+		setFilteredDepartments(totalDepartmentFilter)
 
-				if (searchingName.trim()) {
-					query['search'] = searchingName.trim()
-				}
+		const departmentString = totalDepartmentFilter
+			.map((dept) => dept.id)
+			.join(',')
 
-				if (hideNoImage) {
-					query['hideNoImage'] = 'true'
-				}
-
-				if (chosenDepartment) {
-					query['department'] = chosenDepartment
-				}
-
-				router.push(
-					{
-						pathname: router.pathname,
-						query,
-					},
-					undefined,
-					{ shallow: true }
-				)
-
-				let queryParam = ''
-				if (hideNoImage) {
-					queryParam += '?hideNoImage=true'
-				}
-
-				if (searchingName.trim()) {
-					queryParam += queryParam
-						? `&search=${encodeURIComponent(searchingName.trim())}`
-						: `?search=${encodeURIComponent(searchingName.trim())}`
-				}
-
-				if (chosenDepartment) {
-					queryParam += queryParam
-						? `&department=${chosenDepartment}`
-						: `?department=${chosenDepartment}`
-				}
-
-				const response = await fetch(`/api/hashicorp${queryParam}`)
-				const data = await response.json()
-				setPeople(data.results)
-			} catch (err) {
-				console.error('Error fetching people:', err)
-				setPeople([])
-			} finally {
-				setLoading(false)
-			}
-		}
-
-		const timeoutId = setTimeout(fetchPeople, 300)
-		return () => clearTimeout(timeoutId)
-	}, [searchingName, hideNoImage, router.isReady, chosenDepartment])
+		setchosenDepartment(departmentString)
+	}
 
 	const filteredDepartmentIds = filteredDepartments.reduce(
 		(acc: string[], department: DepartmentNode) => [...acc, department.id],
@@ -173,35 +135,8 @@ export default function PeoplePage({
 				<aside>
 					<DepartmentFilter
 						filteredDepartmentIds={filteredDepartmentIds}
-						clearFiltersHandler={() => {
-							setFilteredDepartments([])
-							setchosenDepartment(null)
-
-							const newQuery = { ...router.query }
-							delete newQuery.department
-
-							router.push(
-								{
-									pathname: router.pathname,
-									query: newQuery,
-								},
-								undefined,
-								{ shallow: true }
-							)
-						}}
-						selectFilterHandler={(departmentFilter: Department) => {
-							const totalDepartmentFilter = findChildrenDepartments(
-								departmentTree,
-								departmentFilter.id
-							)
-							setFilteredDepartments(totalDepartmentFilter)
-
-							const departmentString = totalDepartmentFilter
-								.map((dept) => dept.id)
-								.join(',')
-
-							setchosenDepartment(departmentString)
-						}}
+						clearFiltersHandler={clearFiltersHandler}
+						selectFilterHandler={selectFilterHandler}
 						departmentTree={departmentTree}
 					/>
 				</aside>
