@@ -5,10 +5,12 @@ export function useFilterQuery({
 	setSearchingName,
 	setHideNoImage,
 	setChosenDepartment,
-}: {
+}: // setSearchInputValue,
+{
 	setSearchingName: (val: string) => void
 	setHideNoImage: (val: boolean) => void
 	setChosenDepartment: (val: string | null) => void
+	setSearchInputValue: (val: string) => void
 }) {
 	const router = useRouter()
 
@@ -21,6 +23,7 @@ export function useFilterQuery({
 
 		if (typeof search === 'string') {
 			setSearchingName(search)
+			// setSearchInputValue(search)
 		}
 		if (typeof hideNoImageParam === 'string') {
 			setHideNoImage(hideNoImageParam === 'true')

@@ -2,7 +2,7 @@
  * Copyright (c) HashiCorp, Inc.
  * SPDX-License-Identifier: MPL-2.0
  */
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { executeQuery } from '@datocms/cda-client'
 import { GetStaticProps } from 'next'
 import { useRouter } from 'next/router'
@@ -17,8 +17,6 @@ import Profile from 'components/profile'
 import Search from 'components/search'
 import DepartmentFilter from 'components/departmentFilter'
 import style from './style.module.css'
-import { useFetchPeople } from 'hooks/useFetchPeople'
-import { useFilterQuery } from 'hooks/useFilterQuery'
 
 interface Props {
 	allPeople: PersonRecord[]
@@ -62,59 +60,94 @@ export default function PeoplePage({
 }: Props): React.ReactElement {
 	const router = useRouter()
 	const [searchingName, setSearchingName] = useState('')
-	const [hideNoImage, setHideNoImage] = useState(false)
+	const [hideNoPicture, setHideNoPicture] = useState(false)
 	const [filteredDepartments, setFilteredDepartments] = useState<
 		DepartmentNode[]
 	>([])
 	const [people, setPeople] = useState<PersonRecord[]>(allPeople)
-	const [chosenDepartment, setChosenDepartment] = useState<string | null>(null)
-	const [loading, setLoading] = useState(true)
+	const [chosenDepartment, setchosenDepartment] = useState<string | null>(null)
+	const [loading, setLoading] = useState(false)
 
-	useFilterQuery({
-		setSearchingName,
-		setHideNoImage: setHideNoImage,
-		setChosenDepartment: setChosenDepartment,
-		setSearchInputValue: setSearchingName,
-	})
+	console.log('cur dept: ', chosenDepartment)
 
-	useFetchPeople({
-		searchingName,
-		hideNoImage,
-		chosenDepartment,
-		setPeople,
-		setLoading,
-	})
+	useEffect(() => {
+		if (!router.isReady) {
+			return
+		}
 
-	function clearFiltersHandler() {
-		setFilteredDepartments([])
-		setChosenDepartment(null)
+		const { search, hideNoPicture: hideNoPictureParam } = router.query
 
-		const newQuery = { ...router.query }
-		delete newQuery.department
+		if (search && typeof search === 'string' && search !== searchingName) {
+			setSearchingName(search)
+		}
 
-		router.push(
-			{
-				pathname: router.pathname,
-				query: newQuery,
-			},
-			undefined,
-			{ shallow: true }
-		)
-	}
+		const shouldHideNoPicture = hideNoPictureParam === 'true'
+		if (shouldHideNoPicture !== hideNoPicture) {
+			setHideNoPicture(shouldHideNoPicture)
+		}
+	}, [router.isReady, router.query])
 
-	function selectFilterHandler(departmentFilter: Department) {
-		const totalDepartmentFilter = findChildrenDepartments(
-			departmentTree,
-			departmentFilter.id
-		)
-		setFilteredDepartments(totalDepartmentFilter)
+	useEffect(() => {
+		if (!router.isReady) {
+			return
+		}
+		const fetchPeople = async () => {
+			setLoading(true)
+			try {
+				const query = {}
 
-		const departmentString = totalDepartmentFilter
-			.map((dept) => dept.id)
-			.join(',')
+				if (searchingName.trim()) {
+					query['search'] = searchingName.trim()
+				}
 
-		setChosenDepartment(departmentString)
-	}
+				if (hideNoPicture) {
+					query['hideNoPicture'] = 'true'
+				}
+
+				if (chosenDepartment) {
+					query['department'] = chosenDepartment
+				}
+
+				router.push(
+					{
+						pathname: router.pathname,
+						query,
+					},
+					undefined,
+					{ shallow: true }
+				)
+
+				let queryParam = ''
+				if (hideNoPicture) {
+					queryParam += '?hideNoPicture=true'
+				}
+
+				if (searchingName.trim()) {
+					queryParam += queryParam
+						? `&search=${encodeURIComponent(searchingName.trim())}`
+						: `?search=${encodeURIComponent(searchingName.trim())}`
+				}
+
+				if (chosenDepartment) {
+					queryParam += queryParam
+						? `&department=${chosenDepartment}`
+						: `?department=${chosenDepartment}`
+				}
+
+				const response = await fetch(`/api/hashicorp${queryParam}`)
+				const data = await response.json()
+				setPeople(data.results)
+			} catch (err) {
+				console.error('Error fetching people:', err)
+				setPeople([])
+			} finally {
+				setLoading(false)
+			}
+		}
+
+		const timeoutId = setTimeout(fetchPeople, 300)
+		return () => clearTimeout(timeoutId)
+	}, [searchingName, hideNoPicture, router.isReady, chosenDepartment])
 
 	const filteredDepartmentIds = filteredDepartments.reduce(
 		(acc: string[], department: DepartmentNode) => [...acc, department.id],
@@ -127,48 +160,40 @@ export default function PeoplePage({
 				<h1>HashiCorp Humans</h1>
 				<h5>Find a HashiCorp human</h5>
 				<Search
+					checked={hideNoPicture}
 					onInputChange={(e) => setSearchingName(e.target.value)}
-					onProfileChange={(e) => setHideNoImage(e.target.checked)}
-					hideNoImageChecked={hideNoImage}
-					searchingName={searchingName}
+					onProfileChange={(e) => setHideNoPicture(e.target.checked)}
 				/>
 			</section>
 			<section className={style['department-results-container']}>
 				<aside>
 					<DepartmentFilter
 						filteredDepartmentIds={filteredDepartmentIds}
-						clearFiltersHandler={clearFiltersHandler}
-						selectFilterHandler={selectFilterHandler}
+						clearFiltersHandler={() => {
+							setFilteredDepartments([])
+						}}
+						selectFilterHandler={(departmentFilter: Department) => {
+							const totalDepartmentFilter = findChildrenDepartments(
+								departmentTree,
+								departmentFilter.id
+							)
+							setFilteredDepartments(totalDepartmentFilter)
+							// const chosenDepartments = totalDepartmentFilter.map(
+							// 	(department) => department.id
+							// )
+
+							const departmentString = totalDepartmentFilter
+								.map((dept) => dept.id)
+								.join(',')
+
+							console.log('tdf', totalDepartmentFilter)
+							setchosenDepartment(departmentString)
+						}}
 						departmentTree={departmentTree}
 					/>
 				</aside>
 				{loading ? (
-					<div
-						style={{
-							display: 'flex',
-							flexDirection: 'column',
-							gap: '10px',
-							width: '200px',
-						}}
-					>
-						<div
-							style={{
-								backgroundColor: '#ccc',
-								height: '20px',
-								borderRadius: '4px',
-								animation: 'pulse 1.5s infinite',
-							}}
-						></div>
-						<div
-							style={{
-								backgroundColor: '#ccc',
-								height: '20px',
-								width: '150px',
-								borderRadius: '4px',
-								animation: 'pulse 1.5s infinite',
-							}}
-						></div>
-					</div>
+					<div>Loading...</div>
 				) : (
 					<ul className={style['people-results']}>
 						{people.length === 0 ? (
@@ -178,7 +203,6 @@ export default function PeoplePage({
 								return (
 									<li className={style['person']} key={person.id}>
 										<Profile
-											loading="lazy"
 											imgUrl={person['avatar_url']}
 											name={person.name}
 											title={person.title}

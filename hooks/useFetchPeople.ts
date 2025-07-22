@@ -47,7 +47,7 @@ export function useFetchPeople({
 				console.error('Error fetching people:', err)
 				setPeople([])
 			} finally {
-				setLoading(false)
+				// setLoading(false)
 			}
 		}
 

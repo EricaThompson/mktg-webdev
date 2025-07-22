@@ -8,17 +8,21 @@ export interface SearchProps {
 	onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 	onProfileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 	hideNoImageChecked: boolean
+	searchingName: string
 }
 
 export default function Search({
 	onInputChange,
 	onProfileChange,
 	hideNoImageChecked,
+	searchingName,
 }: SearchProps) {
+	console.log(searchingName)
 	return (
 		<>
 			<input
 				type="text"
+				value={searchingName}
 				placeholder="Search people by name"
 				onChange={onInputChange}
 			/>

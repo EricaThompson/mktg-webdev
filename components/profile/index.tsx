@@ -13,6 +13,7 @@ export interface ProfileProps {
 	name: string
 	title?: string
 	department?: string
+	loading: string
 }
 
 export default function Profile({
@@ -20,6 +21,7 @@ export default function Profile({
 	name,
 	title,
 	department,
+	loading,
 }: ProfileProps): ReactElement {
 	return (
 		<div className={s.card}>
