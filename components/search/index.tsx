@@ -3,26 +3,40 @@
  * SPDX-License-Identifier: MPL-2.0
  */
 
+import style from './style.module.css'
 export interface SearchProps {
 	onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void
 	onProfileChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+	hideNoImageChecked: boolean
+	searchingName: string
 }
 
 export default function Search({
 	onInputChange,
 	onProfileChange,
+	hideNoImageChecked,
+	searchingName,
 }: SearchProps) {
+	console.log(searchingName)
 	return (
 		<>
 			<input
 				type="text"
+				value={searchingName}
 				placeholder="Search people by name"
 				onChange={onInputChange}
 			/>
 
-			<div>
-				<input type="button" onChange={onProfileChange} />
-				<div>Hide people missing a profile image</div>
+			<div className={style['checkbox-container']}>
+				<input
+					id="hide-no-profile"
+					type="checkbox"
+					onChange={onProfileChange}
+					checked={hideNoImageChecked}
+				/>
+				<label htmlFor="hide-no-profile">
+					Hide people missing a profile image
+				</label>
 			</div>
 		</>
 	)

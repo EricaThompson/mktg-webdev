@@ -23,7 +23,6 @@ export const buildChildren = (
 	)
 }
 
-// TODO: There is a bug in this function that is causing the DepartmentFilter component to not render correctly
 export const departmentRecordsToDepartmentTree = (
 	departments: DepartmentNode[]
 ): DepartmentRecord[] => {
@@ -38,6 +37,8 @@ export const departmentRecordsToDepartmentTree = (
 				listWithChildren[currentItemParentId].children.push(
 					currentItemWithChildren
 				)
+			} else {
+				nestedList.push(currentItemWithChildren)
 			}
 
 			return nestedList
